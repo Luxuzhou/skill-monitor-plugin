@@ -1,14 +1,17 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.0-blue" alt="Version">
-  <img src="https://img.shields.io/badge/Claude_Code-2.0+-green" alt="Claude Code">
-  <img src="https://img.shields.io/badge/Python-3.8+-yellow" alt="Python">
-  <img src="https://img.shields.io/badge/license-MIT-brightgreen" alt="License">
-  <img src="https://img.shields.io/badge/platform-Win%20%7C%20Mac%20%7C%20Linux-lightgrey" alt="Platform">
+  <img src="https://img.shields.io/badge/v0.1.0-6366f1?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/Claude_Code-black?style=flat-square&logo=anthropic" alt="Claude Code">
+  <img src="https://img.shields.io/badge/Codex-black?style=flat-square&logo=openai" alt="Codex">
+  <img src="https://img.shields.io/badge/Gemini_CLI-black?style=flat-square&logo=google" alt="Gemini">
+  <img src="https://img.shields.io/badge/OpenCode-black?style=flat-square" alt="OpenCode">
+  <img src="https://img.shields.io/badge/Python_3.8+-yellow?style=flat-square" alt="Python">
+  <img src="https://img.shields.io/badge/MIT-brightgreen?style=flat-square" alt="License">
 </p>
 
 <h1 align="center">Skill Monitor</h1>
-<p align="center"><strong>The missing health dashboard for your Claude Code skill ecosystem</strong></p>
-<p align="center">Security scan / Token cost / Budget analysis / Hook conflicts / Usage tracking<br>All in ~225ms.</p>
+<p align="center"><strong>AI Coding Agent 技能生态健康管理</strong></p>
+<p align="center">你的 Agent 装了 200 个 Skill，但只有 30 个在工作。<br>安全扫描 / Token 成本审计 / 描述预算诊断 / Hook 冲突 / 使用追踪 — 225ms 全面洞察。</p>
+<p align="center"><a href="https://luxuzhou.github.io/skill-monitor-plugin/">Landing Page</a> · <a href="#installation">安装</a> · <a href="#features">功能</a> · <a href="CHANGELOG.md">更新日志</a></p>
 
 ---
 
@@ -109,28 +112,28 @@ Community consensus: Claude handles 30 skills well, starts conflicting at 8-10 m
 
 ## Installation
 
-### Option 1: Claude Code Plugin (Recommended)
+### Claude Code Plugin (推荐)
 
 ```bash
 claude plugin add luxuzhou/skill-monitor-plugin
 ```
 
-### Option 2: Git Clone (Manual)
+### Git Clone (适用所有平台)
 
 ```bash
-# Clone to your skills directory
-git clone https://github.com/luxuzhou/skill-monitor-plugin.git
+git clone https://github.com/Luxuzhou/skill-monitor-plugin.git
+
+# Claude Code / Codex / OpenCode
 cp -r skill-monitor-plugin/skills/skill-monitor ~/.claude/skills/
+
+# Gemini CLI
+cp -r skill-monitor-plugin/skills/skill-monitor ~/.gemini/skills/
+
+# Cursor
+cp -r skill-monitor-plugin/skills/skill-monitor .cursor/skills/
 ```
 
-### Option 3: Direct Download
-
-```bash
-# Download just the skill directory
-mkdir -p ~/.claude/skills/skill-monitor
-curl -sL https://github.com/luxuzhou/skill-monitor-plugin/archive/main.tar.gz | \
-  tar xz --strip-components=2 -C ~/.claude/skills/skill-monitor "*/skills/skill-monitor/*"
-```
+> Skill Monitor 遵循 [Agent Skills](https://agentskills.io) 开放标准，兼容所有支持 SKILL.md 的 AI Coding Agent。
 
 ### Setup Usage Tracking (Optional)
 

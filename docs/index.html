@@ -1,125 +1,157 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Skill Monitor - Claude Code Skill Health Dashboard</title>
+<title>Skill Monitor - AI Coding Agent 技能生态健康管理</title>
+<meta name="description" content="为 Claude Code / Codex / Gemini CLI / OpenCode 等 AI Coding Agent 提供技能安全扫描、Token 成本分析、预算诊断、Hook 冲突检测和使用追踪。">
 <style>
-  :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --dim: #8b949e; --accent: #58a6ff; --green: #3fb950; --yellow: #d29922; --red: #f85149; --purple: #bc8cff; }
+  :root { --bg: #09090b; --card: #18181b; --border: #27272a; --text: #fafafa; --dim: #a1a1aa; --accent: #6366f1; --accent2: #818cf8; --green: #22c55e; --yellow: #eab308; --red: #ef4444; --gradient: linear-gradient(135deg, #6366f1, #8b5cf6, #a78bfa); }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
-  a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Noto Sans CJK SC', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent2); text-decoration: none; } a:hover { text-decoration: underline; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+  code { font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace; }
 
-  .hero { text-align: center; padding: 80px 20px 60px; background: linear-gradient(180deg, #0d1117 0%, #161b22 100%); }
-  .hero h1 { font-size: 3rem; margin-bottom: 16px; background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .hero p { font-size: 1.25rem; color: var(--dim); max-width: 600px; margin: 0 auto 32px; }
-  .badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 32px; }
-  .badges img { height: 24px; }
+  /* Hero */
+  .hero { position: relative; text-align: center; padding: 100px 20px 80px; overflow: hidden; }
+  .hero::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.12) 0%, transparent 60%); pointer-events: none; }
+  .hero .pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border: 1px solid var(--border); border-radius: 20px; font-size: 0.85rem; color: var(--dim); margin-bottom: 24px; }
+  .hero .pill span { background: var(--accent); color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; }
+  .hero h1 { font-size: clamp(2.5rem, 6vw, 4rem); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 20px; }
+  .hero h1 em { font-style: normal; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .hero .subtitle { font-size: 1.2rem; color: var(--dim); max-width: 640px; margin: 0 auto 16px; }
+  .platforms { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 24px 0 36px; }
+  .platforms .chip { padding: 6px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; color: var(--dim); background: var(--card); }
   .cta { display: inline-flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-  .cta a { padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 1rem; transition: all 0.2s; }
-  .cta .primary { background: var(--accent); color: #fff; }
-  .cta .primary:hover { background: #79c0ff; text-decoration: none; }
+  .cta a { padding: 14px 28px; border-radius: 10px; font-weight: 600; font-size: 1rem; transition: all 0.2s; }
+  .cta .primary { background: var(--gradient); color: #fff; box-shadow: 0 4px 20px rgba(99,102,241,0.3); }
+  .cta .primary:hover { box-shadow: 0 6px 30px rgba(99,102,241,0.5); text-decoration: none; transform: translateY(-1px); }
   .cta .secondary { border: 1px solid var(--border); color: var(--text); }
   .cta .secondary:hover { border-color: var(--accent); text-decoration: none; }
 
-  .terminal { background: #0d1117; border: 1px solid var(--border); border-radius: 12px; padding: 24px; max-width: 720px; margin: -20px auto 0; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; line-height: 1.8; overflow-x: auto; text-align: left; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
-  .terminal .g { color: var(--green); } .terminal .y { color: var(--yellow); } .terminal .r { color: var(--red); }
-  .terminal .b { color: var(--accent); } .terminal .d { color: var(--dim); } .terminal .w { font-weight: bold; }
+  /* Terminal */
+  .terminal-wrap { max-width: 760px; margin: -30px auto 0; position: relative; z-index: 2; }
+  .terminal { background: #0c0c0f; border: 1px solid var(--border); border-radius: 14px; padding: 20px 24px; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.82rem; line-height: 1.9; overflow-x: auto; box-shadow: 0 12px 48px rgba(0,0,0,0.5); }
+  .terminal .dots { display: flex; gap: 6px; margin-bottom: 16px; }
+  .terminal .dots i { width: 12px; height: 12px; border-radius: 50%; }
+  .terminal .dots i:nth-child(1) { background: #ff5f57; }
+  .terminal .dots i:nth-child(2) { background: #febc2e; }
+  .terminal .dots i:nth-child(3) { background: #28c840; }
+  .g { color: var(--green); } .y { color: var(--yellow); } .r { color: var(--red); } .b { color: var(--accent2); } .d { color: #52525b; } .w { color: #fff; font-weight: 600; }
 
-  .container { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
-  section { padding: 60px 0; }
-  section h2 { font-size: 2rem; text-align: center; margin-bottom: 40px; }
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border-radius: 14px; overflow: hidden; margin: 60px 0; }
+  .stat { background: var(--card); padding: 32px 20px; text-align: center; }
+  .stat .num { font-size: 2.5rem; font-weight: 800; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .stat .label { color: var(--dim); font-size: 0.9rem; margin-top: 4px; }
+  @media (max-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } }
 
-  .problem { background: var(--card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-  .problem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; }
-  .problem-card { padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); }
-  .problem-card .num { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
-  .problem-card h3 { margin-bottom: 8px; }
-  .problem-card p { color: var(--dim); font-size: 0.9rem; }
+  /* Problem */
+  .problem { padding: 80px 0; }
+  .problem h2 { font-size: 2rem; text-align: center; margin-bottom: 12px; }
+  .problem .sub { text-align: center; color: var(--dim); margin-bottom: 48px; font-size: 1.05rem; }
+  .problem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+  .pcard { padding: 28px; border: 1px solid var(--border); border-radius: 14px; background: var(--card); transition: border-color 0.2s; }
+  .pcard:hover { border-color: var(--accent); }
+  .pcard .icon { font-size: 2rem; margin-bottom: 12px; }
+  .pcard h3 { margin-bottom: 8px; font-size: 1.05rem; }
+  .pcard p { color: var(--dim); font-size: 0.9rem; }
 
-  .features { }
-  .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-  .feature { padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); transition: border-color 0.2s; }
-  .feature:hover { border-color: var(--accent); }
-  .feature code { background: var(--bg); padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; color: var(--accent); }
-  .feature h3 { margin: 12px 0 8px; }
-  .feature p { color: var(--dim); font-size: 0.9rem; }
+  /* Features */
+  .features { padding: 80px 0; background: var(--card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .features h2 { font-size: 2rem; text-align: center; margin-bottom: 48px; }
+  .feat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+  .feat { padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); }
+  .feat code { background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2); padding: 3px 10px; border-radius: 6px; font-size: 0.82rem; color: var(--accent2); }
+  .feat h3 { margin: 12px 0 6px; }
+  .feat p { color: var(--dim); font-size: 0.88rem; }
 
-  .install { background: var(--card); border-top: 1px solid var(--border); }
-  .install-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
-  .install-option { padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); }
-  .install-option h3 { margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-  .install-option pre { background: #161b22; padding: 12px 16px; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; color: var(--green); }
-  .install-option .tag { font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; background: var(--accent); color: #fff; font-weight: 600; }
+  /* Install */
+  .install { padding: 80px 0; }
+  .install h2 { font-size: 2rem; text-align: center; margin-bottom: 48px; }
+  .install-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+  .icard { padding: 28px; border: 1px solid var(--border); border-radius: 14px; background: var(--card); }
+  .icard h3 { margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+  .icard .tag { font-size: 0.7rem; padding: 3px 10px; border-radius: 6px; background: var(--gradient); color: #fff; font-weight: 600; }
+  .icard pre { background: var(--bg); padding: 14px 18px; border-radius: 10px; overflow-x: auto; font-size: 0.85rem; color: var(--green); border: 1px solid var(--border); }
+  .icard p { color: var(--dim); font-size: 0.85rem; margin-top: 12px; }
 
-  .perf { text-align: center; }
-  .perf-num { font-size: 4rem; font-weight: 800; background: linear-gradient(135deg, var(--green), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .perf-label { color: var(--dim); font-size: 1.1rem; }
-  .perf-compare { margin-top: 16px; color: var(--dim); font-size: 0.9rem; }
-
-  footer { text-align: center; padding: 40px 20px; color: var(--dim); font-size: 0.85rem; border-top: 1px solid var(--border); }
+  /* Footer */
+  footer { text-align: center; padding: 48px 20px; color: var(--dim); font-size: 0.85rem; border-top: 1px solid var(--border); }
+  footer a { color: var(--accent2); }
 </style>
 </head>
 <body>
 
 <div class="hero">
-  <div class="badges">
-    <img src="https://img.shields.io/badge/v0.1.0-blue?style=flat-square" alt="version">
-    <img src="https://img.shields.io/badge/Claude_Code-2.0+-green?style=flat-square" alt="claude code">
-    <img src="https://img.shields.io/badge/Python-3.8+-yellow?style=flat-square" alt="python">
-    <img src="https://img.shields.io/badge/MIT-brightgreen?style=flat-square" alt="license">
+  <div class="pill"><span>v0.1.0</span> AI Coding Agent 技能生态健康管理</div>
+  <h1>你的 Agent 装了 200 个 Skill<br>但只有 <em>30 个在工作</em></h1>
+  <p class="subtitle">Skill Monitor 为 AI Coding Agent 提供安全扫描、Token 成本审计、描述预算诊断、Hook 冲突检测和使用频率追踪 -- 一次扫描，全面洞察。</p>
+  <div class="platforms">
+    <span class="chip">Claude Code</span>
+    <span class="chip">OpenAI Codex</span>
+    <span class="chip">Gemini CLI</span>
+    <span class="chip">OpenCode</span>
+    <span class="chip">Cursor</span>
   </div>
-  <h1>Skill Monitor</h1>
-  <p>The missing health dashboard for your Claude Code skill ecosystem. Security, cost, budget, conflicts - all in one scan.</p>
   <div class="cta">
-    <a href="https://github.com/Luxuzhou/skill-monitor-plugin" class="primary">View on GitHub</a>
-    <a href="#install" class="secondary">Install Now</a>
+    <a href="https://github.com/Luxuzhou/skill-monitor-plugin" class="primary">GitHub</a>
+    <a href="#install" class="secondary">立即安装</a>
   </div>
 </div>
 
-<div class="container" style="position:relative; z-index:1;">
-  <div class="terminal">
-    <span class="d">$</span> /skill-monitor<br><br>
-    <span class="w">SKILLS</span>    <span class="b">120</span> total  <span class="d">(27 user / 93 plugin / 8 packages)</span><br><br>
-    <span class="w">SECURITY</span>  <span class="d">(pattern scan: 120 skills)</span><br>
-    Score     <span class="y">86/100</span>  <span class="y">&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9601;&#9601;&#9601;</span><br>
-    Findings  <span class="g">0 critical</span>  <span class="y">2 high</span>  <span class="d">4 medium</span><br><br>
-    <span class="w">TOKEN COST</span>  <span class="d">(all skill descriptions per conversation)</span><br>
-    Total     <span class="r">~12,507</span>/conv  <span class="r">&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;</span><br>
-    <span class="d">  User:   ~3,300 tok (27 skills)</span><br>
-    <span class="d">  Plugin: ~9,207 tok (93 skills)</span><br><br>
-    <span class="w">BUDGET</span>  <span class="d">(description visibility: ~35K chars)</span><br>
-    Used      <span class="r">40,845</span>/35,000  <span class="r">&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9601;&#9601;&#9601;&#9601;&#9601;&#9601;&#9601;&#9601;&#9601;</span>  (116%)<br>
-    <span class="y">Truncated  50 skills losing trigger keywords</span><br><br>
-    <span class="w">HOOKS</span><br>
-    Hooks     <span class="b">8</span> total  |  Conflicts <span class="r">4</span>
+<div class="container">
+  <div class="terminal-wrap">
+    <div class="terminal">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <span class="d">$</span> /skill-monitor<br><br>
+      <span class="w">SKILLS</span>    <span class="b">120</span> total  <span class="d">(27 user / 93 plugin / 8 packages)</span><br><br>
+      <span class="w">SECURITY</span>  <span class="d">(pattern scan: 120 skills)</span><br>
+      Score     <span class="y">86/100</span>  <span class="y">&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9601;&#9601;&#9601;</span><br>
+      Findings  <span class="g">0 critical</span>  <span class="y">2 high</span>  <span class="d">4 medium</span><br><br>
+      <span class="w">TOKEN COST</span>  <span class="d">(all descriptions per conversation)</span><br>
+      Total     <span class="r">~12,507</span>/conv<br>
+      <span class="d">  User:   ~3,300 tok  |  Plugin: ~9,207 tok</span><br><br>
+      <span class="w">BUDGET</span>  <span class="d">(description visibility: ~35K chars)</span><br>
+      Used      <span class="r">40,845</span>/35,000  (116%)<br>
+      <span class="y">Truncated  50 skills losing trigger keywords</span><br><br>
+      <span class="w">Quality</span>  <span class="r">120 skills</span>  <span class="r">Critical</span> - too many skills competing
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="num">225ms</div><div class="label">全量扫描 220+ Skills</div></div>
+    <div class="stat"><div class="num">670x</div><div class="label">比 Bash 快 (Windows)</div></div>
+    <div class="stat"><div class="num">9</div><div class="label">Dashboard 检测维度</div></div>
+    <div class="stat"><div class="num">6</div><div class="label">LLM 深度分析命令</div></div>
   </div>
 </div>
 
 <section class="problem">
   <div class="container">
-    <h2>What You Can't See Is Costing You</h2>
+    <h2>你看不到的问题，正在拖慢你的 Agent</h2>
+    <p class="sub">社区实测：8-10 个 Skill 就开始互相冲突。你装了多少个？</p>
     <div class="problem-grid">
-      <div class="problem-card">
-        <div class="num" style="color:var(--red)">74%</div>
-        <h3>Hidden Token Tax</h3>
-        <p>Plugin descriptions are injected every conversation but invisible to you. Most tools only count user skills.</p>
+      <div class="pcard">
+        <div class="icon">&#128176;</div>
+        <h3>隐性 Token 税</h3>
+        <p>Plugin 的 description 每次对话都注入，你看不到也关不掉。通常占总注入量的 74%。</p>
       </div>
-      <div class="problem-card">
-        <div class="num" style="color:var(--yellow)">250c</div>
-        <h3>Silent Truncation</h3>
-        <p>When budget is tight, descriptions are capped at 250 chars. Trigger keywords after that point are lost.</p>
+      <div class="pcard">
+        <div class="icon">&#9986;</div>
+        <h3>静默截断</h3>
+        <p>超过预算时，每个 description 被砍到 250 字符。超出部分的 trigger 关键词永久丢失。</p>
       </div>
-      <div class="problem-card">
-        <div class="num" style="color:var(--purple)">220+</div>
-        <h3>Skill Overload</h3>
-        <p>Community tested: Claude conflicts at 8-10 skills. With 220+, matching accuracy degrades significantly.</p>
+      <div class="pcard">
+        <div class="icon">&#9888;</div>
+        <h3>Hook 冲突</h3>
+        <p>多个插件注册同一个 matcher，每次工具调用触发多个 hook，增加延迟和不确定性。</p>
       </div>
-      <div class="problem-card">
-        <div class="num" style="color:var(--accent)">0%</div>
-        <h3>Usage Visibility</h3>
-        <p>No built-in way to know which skills are used. GitHub issue #35319 is still open.</p>
+      <div class="pcard">
+        <div class="icon">&#128683;</div>
+        <h3>零使用可见性</h3>
+        <p>官方不提供 Skill 使用频率追踪。GitHub issue #35319 已提出，至今无回应。</p>
       </div>
     </div>
   </div>
@@ -127,75 +159,76 @@
 
 <section class="features">
   <div class="container">
-    <h2>Full Visibility in One Command</h2>
-    <div class="feature-grid">
-      <div class="feature">
+    <h2>一次扫描，全面诊断</h2>
+    <div class="feat-grid">
+      <div class="feat">
         <code>/skill-monitor security</code>
-        <h3>Security Scan</h3>
-        <p>Pattern-based detection: reverse shells, credential+network combos, sensitive path access, unconfirmed settings.json modifications.</p>
+        <h3>安全扫描</h3>
+        <p>CRITICAL / HIGH / MEDIUM 三级告警。检测反弹 Shell、凭据泄露、敏感路径访问、未经确认的配置修改。</p>
       </div>
-      <div class="feature">
+      <div class="feat">
         <code>/skill-monitor cost</code>
-        <h3>Token Cost Breakdown</h3>
-        <p>Accurate extraction for both single-line and multi-line YAML descriptions. User vs plugin breakdown. Top 10 most expensive.</p>
+        <h3>Token 成本审计</h3>
+        <p>精确提取每个 Skill 的 description（支持单行和多行 YAML）。User / Plugin 分项统计，Top 10 成本排行。</p>
       </div>
-      <div class="feature">
+      <div class="feat">
         <code>/skill-monitor budget</code>
-        <h3>Budget Analysis</h3>
-        <p>Based on official Claude Code spec: 1% context window budget, 250-char truncation, quality assessment for skill count.</p>
+        <h3>描述预算诊断</h3>
+        <p>基于官方文档：1% context window 预算、250 字符截断上限、Skill 数量对匹配准确性的影响评估。</p>
       </div>
-      <div class="feature">
+      <div class="feat">
         <code>/skill-monitor hooks</code>
-        <h3>Hook Conflicts</h3>
-        <p>Scans settings.json and skill frontmatter for duplicate matchers that cause redundant processing.</p>
+        <h3>Hook 冲突检测</h3>
+        <p>扫描 settings.json 和 Skill frontmatter，找出注册了相同 matcher 的重复 hook。</p>
       </div>
-      <div class="feature">
+      <div class="feat">
         <code>/skill-monitor overlap</code>
-        <h3>Cross-Layer Overlap</h3>
-        <p>LLM-powered detection of user skills that duplicate plugin capabilities. Recommends remove, keep, or merge.</p>
+        <h3>跨层重叠检测</h3>
+        <p>LLM 驱动：对比 user skill 和 plugin skill 的描述，找出功能重复项，建议保留或移除。</p>
       </div>
-      <div class="feature">
+      <div class="feat">
         <code>/skill-monitor compress</code>
-        <h3>Description Optimizer</h3>
-        <p>Shorten descriptions to keep trigger keywords within the 250-char visibility window.</p>
+        <h3>描述压缩优化</h3>
+        <p>将超长 description 压缩到 250c 以内，确保 trigger 关键词在可见窗口中。Front-load 最佳实践。</p>
       </div>
     </div>
   </div>
 </section>
 
-<section class="perf" style="background:var(--card); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
-  <div class="container">
-    <div class="perf-num">225ms</div>
-    <div class="perf-label">Full scan of 220+ skills</div>
-    <div class="perf-compare">670x faster than bash on Windows. Python single-pass scanner reads all files once.</div>
-  </div>
-</section>
-
 <section class="install" id="install">
   <div class="container">
-    <h2>Get Started</h2>
-    <div class="install-options">
-      <div class="install-option">
-        <h3><span class="tag">Recommended</span> Plugin Install</h3>
+    <h2>30 秒完成安装</h2>
+    <div class="install-grid">
+      <div class="icard">
+        <h3><span class="tag">推荐</span> Claude Code Plugin</h3>
         <pre>claude plugin add luxuzhou/skill-monitor-plugin</pre>
       </div>
-      <div class="install-option">
-        <h3>Git Clone</h3>
+      <div class="icard">
+        <h3>Git Clone (适用所有平台)</h3>
         <pre>git clone https://github.com/Luxuzhou/skill-monitor-plugin.git
-cp -r skill-monitor-plugin/skills/skill-monitor ~/.claude/skills/</pre>
+
+# Claude Code / Codex / OpenCode
+cp -r skill-monitor-plugin/skills/skill-monitor ~/.claude/skills/
+
+# Gemini CLI
+cp -r skill-monitor-plugin/skills/skill-monitor ~/.gemini/skills/
+
+# Cursor
+cp -r skill-monitor-plugin/skills/skill-monitor .cursor/skills/</pre>
+        <p>Skill Monitor 遵循 <a href="https://agentskills.io">Agent Skills</a> 开放标准，兼容所有支持 SKILL.md 的 AI Coding Agent。</p>
       </div>
-      <div class="install-option">
-        <h3>Then Run</h3>
+      <div class="icard">
+        <h3>验证安装</h3>
         <pre>/skill-monitor</pre>
-        <p style="color:var(--dim); margin-top:12px; font-size:0.85rem;">Optional: <code>/skill-monitor setup-tracking</code> to enable usage tracking.</p>
+        <p>看到 Dashboard 输出即安装成功。可选：<code>/skill-monitor setup-tracking</code> 启用使用追踪。</p>
       </div>
     </div>
   </div>
 </section>
 
 <footer>
-  <p>Built by <a href="https://github.com/Luxuzhou">Lex Lu</a> with Claude Code. MIT Licensed.</p>
-  <p style="margin-top:8px;">Addresses <a href="https://github.com/anthropics/claude-code/issues/35319">#35319</a> (skill tracking) and community skill management pain points.</p>
+  <p>由 <a href="https://github.com/Luxuzhou">Lex Lu</a> 基于 Claude Code 构建 &middot; MIT License &middot; <a href="https://github.com/Luxuzhou/skill-monitor-plugin">GitHub</a></p>
+  <p style="margin-top:8px;">回应社区痛点 <a href="https://github.com/anthropics/claude-code/issues/35319">#35319</a>（Skill 使用追踪）和 <a href="https://gist.github.com/alexey-pelykh/faa3c304f731d6a962efc5fa2a43abe1">Skill 预算研究</a></p>
 </footer>
 
 </body>
