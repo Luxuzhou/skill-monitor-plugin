@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skill Monitor - Claude Code Skill Health Dashboard</title>
+<style>
+  :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --dim: #8b949e; --accent: #58a6ff; --green: #3fb950; --yellow: #d29922; --red: #f85149; --purple: #bc8cff; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .hero { text-align: center; padding: 80px 20px 60px; background: linear-gradient(180deg, #0d1117 0%, #161b22 100%); }
+  .hero h1 { font-size: 3rem; margin-bottom: 16px; background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .hero p { font-size: 1.25rem; color: var(--dim); max-width: 600px; margin: 0 auto 32px; }
+  .badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 32px; }
+  .badges img { height: 24px; }
+  .cta { display: inline-flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .cta a { padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 1rem; transition: all 0.2s; }
+  .cta .primary { background: var(--accent); color: #fff; }
+  .cta .primary:hover { background: #79c0ff; text-decoration: none; }
+  .cta .secondary { border: 1px solid var(--border); color: var(--text); }
+  .cta .secondary:hover { border-color: var(--accent); text-decoration: none; }
+
+  .terminal { background: #0d1117; border: 1px solid var(--border); border-radius: 12px; padding: 24px; max-width: 720px; margin: -20px auto 0; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; line-height: 1.8; overflow-x: auto; text-align: left; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+  .terminal .g { color: var(--green); } .terminal .y { color: var(--yellow); } .terminal .r { color: var(--red); }
+  .terminal .b { color: var(--accent); } .terminal .d { color: var(--dim); } .terminal .w { font-weight: bold; }
+
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+  section { padding: 60px 0; }
+  section h2 { font-size: 2rem; text-align: center; margin-bottom: 40px; }
+
+  .problem { background: var(--card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .problem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; }
+  .problem-card { padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); }
+  .problem-card .num { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
+  .problem-card h3 { margin-bottom: 8px; }
+  .problem-card p { color: var(--dim); font-size: 0.9rem; }
+
+  .features { }
+  .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+  .feature { padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); transition: border-color 0.2s; }
+  .feature:hover { border-color: var(--accent); }
+  .feature code { background: var(--bg); padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; color: var(--accent); }
+  .feature h3 { margin: 12px 0 8px; }
+  .feature p { color: var(--dim); font-size: 0.9rem; }
+
+  .install { background: var(--card); border-top: 1px solid var(--border); }
+  .install-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+  .install-option { padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); }
+  .install-option h3 { margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .install-option pre { background: #161b22; padding: 12px 16px; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; color: var(--green); }
+  .install-option .tag { font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; background: var(--accent); color: #fff; font-weight: 600; }
+
+  .perf { text-align: center; }
+  .perf-num { font-size: 4rem; font-weight: 800; background: linear-gradient(135deg, var(--green), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .perf-label { color: var(--dim); font-size: 1.1rem; }
+  .perf-compare { margin-top: 16px; color: var(--dim); font-size: 0.9rem; }
+
+  footer { text-align: center; padding: 40px 20px; color: var(--dim); font-size: 0.85rem; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="badges">
+    <img src="https://img.shields.io/badge/v0.1.0-blue?style=flat-square" alt="version">
+    <img src="https://img.shields.io/badge/Claude_Code-2.0+-green?style=flat-square" alt="claude code">
+    <img src="https://img.shields.io/badge/Python-3.8+-yellow?style=flat-square" alt="python">
+    <img src="https://img.shields.io/badge/MIT-brightgreen?style=flat-square" alt="license">
+  </div>
+  <h1>Skill Monitor</h1>
+  <p>The missing health dashboard for your Claude Code skill ecosystem. Security, cost, budget, conflicts - all in one scan.</p>
+  <div class="cta">
+    <a href="https://github.com/Luxuzhou/skill-monitor-plugin" class="primary">View on GitHub</a>
+    <a href="#install" class="secondary">Install Now</a>
+  </div>
+</div>
+
+<div class="container" style="position:relative; z-index:1;">
+  <div class="terminal">
+    <span class="d">$</span> /skill-monitor<br><br>
+    <span class="w">SKILLS</span>    <span class="b">120</span> total  <span class="d">(27 user / 93 plugin / 8 packages)</span><br><br>
+    <span class="w">SECURITY</span>  <span class="d">(pattern scan: 120 skills)</span><br>
+    Score     <span class="y">86/100</span>  <span class="y">&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9601;&#9601;&#9601;</span><br>
+    Findings  <span class="g">0 critical</span>  <span class="y">2 high</span>  <span class="d">4 medium</span><br><br>
+    <span class="w">TOKEN COST</span>  <span class="d">(all skill descriptions per conversation)</span><br>
+    Total     <span class="r">~12,507</span>/conv  <span class="r">&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;</span><br>
+    <span class="d">  User:   ~3,300 tok (27 skills)</span><br>
+    <span class="d">  Plugin: ~9,207 tok (93 skills)</span><br><br>
+    <span class="w">BUDGET</span>  <span class="d">(description visibility: ~35K chars)</span><br>
+    Used      <span class="r">40,845</span>/35,000  <span class="r">&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9601;&#9601;&#9601;&#9601;&#9601;&#9601;&#9601;&#9601;&#9601;</span>  (116%)<br>
+    <span class="y">Truncated  50 skills losing trigger keywords</span><br><br>
+    <span class="w">HOOKS</span><br>
+    Hooks     <span class="b">8</span> total  |  Conflicts <span class="r">4</span>
+  </div>
+</div>
+
+<section class="problem">
+  <div class="container">
+    <h2>What You Can't See Is Costing You</h2>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="num" style="color:var(--red)">74%</div>
+        <h3>Hidden Token Tax</h3>
+        <p>Plugin descriptions are injected every conversation but invisible to you. Most tools only count user skills.</p>
+      </div>
+      <div class="problem-card">
+        <div class="num" style="color:var(--yellow)">250c</div>
+        <h3>Silent Truncation</h3>
+        <p>When budget is tight, descriptions are capped at 250 chars. Trigger keywords after that point are lost.</p>
+      </div>
+      <div class="problem-card">
+        <div class="num" style="color:var(--purple)">220+</div>
+        <h3>Skill Overload</h3>
+        <p>Community tested: Claude conflicts at 8-10 skills. With 220+, matching accuracy degrades significantly.</p>
+      </div>
+      <div class="problem-card">
+        <div class="num" style="color:var(--accent)">0%</div>
+        <h3>Usage Visibility</h3>
+        <p>No built-in way to know which skills are used. GitHub issue #35319 is still open.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="features">
+  <div class="container">
+    <h2>Full Visibility in One Command</h2>
+    <div class="feature-grid">
+      <div class="feature">
+        <code>/skill-monitor security</code>
+        <h3>Security Scan</h3>
+        <p>Pattern-based detection: reverse shells, credential+network combos, sensitive path access, unconfirmed settings.json modifications.</p>
+      </div>
+      <div class="feature">
+        <code>/skill-monitor cost</code>
+        <h3>Token Cost Breakdown</h3>
+        <p>Accurate extraction for both single-line and multi-line YAML descriptions. User vs plugin breakdown. Top 10 most expensive.</p>
+      </div>
+      <div class="feature">
+        <code>/skill-monitor budget</code>
+        <h3>Budget Analysis</h3>
+        <p>Based on official Claude Code spec: 1% context window budget, 250-char truncation, quality assessment for skill count.</p>
+      </div>
+      <div class="feature">
+        <code>/skill-monitor hooks</code>
+        <h3>Hook Conflicts</h3>
+        <p>Scans settings.json and skill frontmatter for duplicate matchers that cause redundant processing.</p>
+      </div>
+      <div class="feature">
+        <code>/skill-monitor overlap</code>
+        <h3>Cross-Layer Overlap</h3>
+        <p>LLM-powered detection of user skills that duplicate plugin capabilities. Recommends remove, keep, or merge.</p>
+      </div>
+      <div class="feature">
+        <code>/skill-monitor compress</code>
+        <h3>Description Optimizer</h3>
+        <p>Shorten descriptions to keep trigger keywords within the 250-char visibility window.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="perf" style="background:var(--card); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+  <div class="container">
+    <div class="perf-num">225ms</div>
+    <div class="perf-label">Full scan of 220+ skills</div>
+    <div class="perf-compare">670x faster than bash on Windows. Python single-pass scanner reads all files once.</div>
+  </div>
+</section>
+
+<section class="install" id="install">
+  <div class="container">
+    <h2>Get Started</h2>
+    <div class="install-options">
+      <div class="install-option">
+        <h3><span class="tag">Recommended</span> Plugin Install</h3>
+        <pre>claude plugin add luxuzhou/skill-monitor-plugin</pre>
+      </div>
+      <div class="install-option">
+        <h3>Git Clone</h3>
+        <pre>git clone https://github.com/Luxuzhou/skill-monitor-plugin.git
+cp -r skill-monitor-plugin/skills/skill-monitor ~/.claude/skills/</pre>
+      </div>
+      <div class="install-option">
+        <h3>Then Run</h3>
+        <pre>/skill-monitor</pre>
+        <p style="color:var(--dim); margin-top:12px; font-size:0.85rem;">Optional: <code>/skill-monitor setup-tracking</code> to enable usage tracking.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Built by <a href="https://github.com/Luxuzhou">Lex Lu</a> with Claude Code. MIT Licensed.</p>
+  <p style="margin-top:8px;">Addresses <a href="https://github.com/anthropics/claude-code/issues/35319">#35319</a> (skill tracking) and community skill management pain points.</p>
+</footer>
+
+</body>
+</html>
