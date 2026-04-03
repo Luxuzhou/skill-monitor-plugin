@@ -23,13 +23,6 @@ allowed-tools:
   - Agent
   - AskUserQuestion
 argument-hint: "[security|cost|budget|hooks|usage|versions|diff|full|deep-audit|clusters|overlap|profile|redundancy|compress|project-config|disable|quarantine|restore|setup-tracking]"
-hooks:
-  PreToolUse:
-    - matcher: "Skill"
-      hooks:
-        - type: command
-          command: "bash ${CLAUDE_SKILL_DIR}/scripts/track-usage.sh"
-          statusMessage: "Tracking skill usage..."
 ---
 
 # Skill Monitor — 技能健康管理系统
